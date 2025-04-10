@@ -1,0 +1,222 @@
+import { useState, useEffect } from 'react';
+import { Share2, RefreshCw, ThumbsUp, Bookmark, Copy, Twitter, Facebook } from 'lucide-react';
+
+// Sample quotes database
+const quoteDatabase = [
+  { text: "Be yourself; everyone else is already taken.", author: "Oscar Wilde" },
+  { text: "Two things are infinite: the universe and human stupidity; and I'm not sure about the universe.", author: "Albert Einstein" },
+  { text: "So many books, so little time.", author: "Frank Zappa" },
+  { text: "Be the change that you wish to see in the world.", author: "Mahatma Gandhi" },
+  { text: "In three words I can sum up everything I've learned about life: it goes on.", author: "Robert Frost" },
+  { text: "If you tell the truth, you don't have to remember anything.", author: "Mark Twain" },
+  { text: "A friend is someone who knows all about you and still loves you.", author: "Elbert Hubbard" },
+  { text: "Always forgive your enemies; nothing annoys them so much.", author: "Oscar Wilde" },
+  { text: "Live as if you were to die tomorrow. Learn as if you were to live forever.", author: "Mahatma Gandhi" },
+  { text: "Without music, life would be a mistake.", author: "Friedrich Nietzsche" },
+  { text: "To be yourself in a world that is constantly trying to make you something else is the greatest accomplishment.", author: "Ralph Waldo Emerson" },
+  { text: "The man who does not read has no advantage over the man who cannot read.", author: "Mark Twain" },
+  { text: "For every minute you are angry you lose sixty seconds of happiness.", author: "Ralph Waldo Emerson" },
+  { text: "If you want to know what a man's like, take a good look at how he treats his inferiors, not his equals.", author: "J.K. Rowling" },
+  { text: "If opportunity doesn't knock, build a door.", author: "Milton Berle" }
+];
+
+// Colorful backgrounds for quotes
+const backgrounds = [
+  "bg-blue-100", "bg-green-100", "bg-purple-100", "bg-pink-100", "bg-yellow-100", 
+  "bg-indigo-100", "bg-red-100", "bg-orange-100", "bg-teal-100"
+];
+
+export default function RandomQuoteGenerator() {
+  const [quote, setQuote] = useState(null);
+  const [background, setBackground] = useState(backgrounds[0]);
+  const [copied, setCopied] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [likedQuotes, setLikedQuotes] = useState([]);
+  const [savedQuotes, setSavedQuotes] = useState([]);
+  const [showSaved, setShowSaved] = useState(false);
+
+  useEffect(() => {
+    // Generate a random quote on first load
+    generateRandomQuote();
+  }, []);
+
+  const generateRandomQuote = () => {
+    const randomIndex = Math.floor(Math.random() * quoteDatabase.length);
+    const randomBgIndex = Math.floor(Math.random() * backgrounds.length);
+
+    setQuote(quoteDatabase[randomIndex]);
+    setBackground(backgrounds[randomBgIndex]);
+    setCopied(false);
+    setLiked(false);
+    setSaved(false);
+    setShareMenuOpen(false);
+  };
+
+  const copyToClipboard = () => {
+    const textToCopy = `"${quote.text}" - ${quote.author}`;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleLike = () => {
+    setLiked(!liked);
+    if (!liked && quote) {
+      setLikedQuotes([...likedQuotes, quote]);
+    } else {
+      setLikedQuotes(likedQuotes.filter(q => q.text !== quote.text));
+    }
+  };
+
+  const handleSave = () => {
+    setSaved(!saved);
+    if (!saved && quote) {
+      setSavedQuotes([...savedQuotes, quote]);
+    } else {
+      setSavedQuotes(savedQuotes.filter(q => q.text !== quote.text));
+    }
+  };
+
+  const handleShare = (platform) => {
+    const text = encodeURIComponent(`"${quote.text}" - ${quote.author}`);
+    let url = '';
+
+    if (platform === 'twitter') {
+      url = `https://twitter.com/intent/tweet?text=${text}`;
+    } else if (platform === 'facebook') {
+      url = `https://www.facebook.com/sharer/sharer.php?u=${window.location.href}&quote=${text}`;
+    }
+
+    if (url) {
+      window.open(url, '_blank');
+    }
+    
+    setShareMenuOpen(false);
+  };
+
+  if (!quote) return <div className="flex justify-center items-center h-64">Loading...</div>;
+
+  return (
+    <div className="max-w-md mx-auto p-4">
+      <div className="mb-6 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">Quote Generator</h1>
+        <button 
+          onClick={() => setShowSaved(!showSaved)} 
+          className={`px-3 py-1 rounded-md ${showSaved ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+        >
+          {showSaved ? 'Back to Generator' : 'Saved Quotes'}
+        </button>
+      </div>
+
+      {!showSaved ? (
+        <>
+          <div className={`p-6 rounded-lg shadow-md mb-4 transition-colors duration-500 ${background}`}>
+            <div className="mb-4">
+              <p className="text-xl font-medium leading-relaxed">"{quote.text}"</p>
+              <p className="text-right mt-2 text-gray-700">- {quote.author}</p>
+            </div>
+            
+            <div className="flex justify-between items-center mt-4">
+              <div className="flex space-x-2">
+                <button 
+                  onClick={handleLike} 
+                  className={`p-2 rounded-full ${liked ? 'bg-red-100 text-red-500' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
+                  title="Like this quote"
+                >
+                  <ThumbsUp size={20} />
+                </button>
+                <button 
+                  onClick={handleSave} 
+                  className={`p-2 rounded-full ${saved ? 'bg-yellow-100 text-yellow-600' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
+                  title="Save this quote"
+                >
+                  <Bookmark size={20} />
+                </button>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShareMenuOpen(!shareMenuOpen)} 
+                    className="p-2 rounded-full bg-white text-gray-500 hover:bg-gray-100"
+                    title="Share this quote"
+                  >
+                    <Share2 size={20} />
+                  </button>
+                  {shareMenuOpen && (
+                    <div className="absolute top-10 left-0 bg-white shadow-lg rounded-md p-2 z-10">
+                      <button 
+                        onClick={() => handleShare('twitter')}
+                        className="flex items-center w-full px-3 py-2 text-sm hover:bg-gray-100 rounded"
+                      >
+                        <Twitter size={16} className="mr-2 text-blue-400" />
+                        Twitter
+                      </button>
+                      <button 
+                        onClick={() => handleShare('facebook')}
+                        className="flex items-center w-full px-3 py-2 text-sm hover:bg-gray-100 rounded"
+                      >
+                        <Facebook size={16} className="mr-2 text-blue-600" />
+                        Facebook
+                      </button>
+                      <button 
+                        onClick={copyToClipboard}
+                        className="flex items-center w-full px-3 py-2 text-sm hover:bg-gray-100 rounded"
+                      >
+                        <Copy size={16} className="mr-2 text-gray-600" />
+                        Copy
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button 
+                onClick={generateRandomQuote} 
+                className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+              >
+                <RefreshCw size={16} className="mr-1" />
+                New Quote
+              </button>
+            </div>
+          </div>
+
+          {copied && (
+            <div className="fixed top-4 right-4 bg-green-100 text-green-800 px-4 py-2 rounded shadow">
+              Quote copied to clipboard!
+            </div>
+          )}
+
+          {likedQuotes.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold mb-2">Your Liked Quotes</h2>
+              <div className="max-h-64 overflow-y-auto">
+                {likedQuotes.map((q, index) => (
+                  <div key={index} className="p-3 bg-gray-50 rounded mb-2 border-l-4 border-red-300">
+                    <p className="text-sm">"{q.text}"</p>
+                    <p className="text-xs text-gray-500 text-right">- {q.author}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Your Saved Quotes</h2>
+          {savedQuotes.length === 0 ? (
+            <p className="text-gray-500 italic">No saved quotes yet. Like some quotes to see them here!</p>
+          ) : (
+            <div className="space-y-4">
+              {savedQuotes.map((q, index) => (
+                <div key={index} className="p-4 bg-yellow-50 rounded-md border-l-4 border-yellow-300">
+                  <p className="text-lg">"{q.text}"</p>
+                  <p className="text-gray-700 text-right mt-1">- {q.author}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
